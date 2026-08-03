@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ren: Radio Web</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+        body,
+        button,
+        input {
+            font-family: 'VT323', monospace;
+            letter-spacing: 0.05em;
+        }
+
+        .japanese-text {
+            font-family: sans-serif;
+        }
+
+        .art-display {
+            image-rendering: pixelated;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .retro-btn {
+            border: 2px solid #333333;
+            background-color: #161616;
+            transition: all 0.1s ease;
+        }
+
+        .retro-btn:active {
+            border-color: #555555;
+            background-color: #222222;
+            transform: translateY(1px);
+        }
+
+        /* Modal Backdrop */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(2px);
+        }
+
+        /* New Vinyl Styles */
+        @keyframes rotate-vinyl {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .vinyl-spinning {
+            animation: rotate-vinyl 10s linear infinite;
+        }
+
+        /* LIGHT MODE OVERRIDES */
+        body.light-mode {
+            background-color: #e2e8f0 !important;
+            color: #0f172a !important;
+        }
+
+        .light-mode .bg-\[\#121212\] {
+            background-color: #ffffff !important;
+        }
+
+        .light-mode .bg-\[\#161616\],
+        .light-mode .retro-btn {
+            background-color: #f8fafc !important;
+            border-color: #cbd5e1 !important;
+        }
+
+        .light-mode .retro-btn:active {
+            background-color: #e2e8f0 !important;
+        }
+
+        .light-mode .bg-\[\#1f2937\] {
+            background-color: #e2e8f0 !important;
+        }
+
+        .light-mode .border-\[\#2a2a2a\],
+        .light-mode .border-\[\#222222\],
+        .light-mode .border-\[\#262626\],
+        .light-mode .border-\[\#282828\],
+        .light-mode .border-\[\#333333\] {
+            border-color: #cbd5e1 !important;
+        }
+
+        .light-mode .text-\[\#f0f0f0\],
+        .light-mode .text-\[\#e0e0e0\],
+        .light-mode .text-white {
+            color: #0f172a !important;
+        }
+
+        .light-mode .text-\[\#aaaaaa\],
+        .light-mode .text-\[\#cccccc\],
+        .light-mode .text-\[\#888888\] {
+            color: #475569 !important;
+        }
+
+        .light-mode .modal-overlay {
+            background-color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+        .light-mode .bg-\[\#111\],
+        .light-mode .bg-black {
+            background-color: #f1f5f9 !important;
+        }
+
+        .light-mode .bg-black\/40 {
+            background-color: rgba(255, 255, 255, 0.7) !important;
+        }
+
+        .light-mode .bg-\[\#0d0d0d\] {
+            background-color: #fff !important;
+            border-color: #cbd5e1 !important;
+        }
+
+        .light-mode .text-\[\#111\] {
+            color: #94a3b8 !important;
+        }
+
+        .light-mode .bg-black\/80 {
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            color: #475569 !important;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-[#0d0d0d] text-[#e0e0e0] min-h-screen flex items-center justify-center p-4 relative transition-colors duration-300">
+
+    <div id="zenModeOverlay" onclick="shuffleArtwork()"
+        class="fixed inset-0 z-[100] hidden bg-black items-center justify-center art-display transition-colors duration-300 cursor-pointer">
+        <div class="absolute inset-0 bg-black/40 z-0 transition-colors duration-300 pointer-events-none"></div>
+
+        <div onclick="toggleZenPomodoro(event)" title="Tap to toggle Pomodoro Timer"
+            class="relative z-10 flex flex-col items-center cursor-pointer hover:scale-105 transition-transform group">
+            <div id="zenTimeDisplay"
+                class="text-8xl md:text-[9rem] text-[#f0f0f0] font-normal tracking-widest drop-shadow-[0_0_15px_rgba(0,0,0,0.8)] group-hover:text-white transition-colors">
+                00:00
+            </div>
+            <div id="zenTimerLabel"
+                class="text-xl text-amber-400 tracking-[0.2em] uppercase hidden mt-2 drop-shadow-md font-bold">
+                FOCUS
+            </div>
+        </div>
+
+        <button onclick="toggleZenMode(event)"
+            class="absolute bottom-8 left-8 z-10 text-white/70 hover:text-white flex items-center gap-2 text-xl drop-shadow-md transition-all hover:-translate-x-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            BACK
+        </button>
+    </div>
+
+    <div
+        class="w-full max-w-sm bg-[#121212] border-2 border-[#2a2a2a] p-4 flex flex-col gap-3 shadow-2xl relative z-10 transition-colors duration-300">
+
+        <header class="flex justify-between items-center pb-2 border-b border-[#222222] transition-colors duration-300">
+            <h1 id="greetingText" class="text-3xl font-normal tracking-wide text-[#f0f0f0]">Good Evening</h1>
+            <span onclick="toggleZenMode()" title="Enter Zen Mode"
+                class="text-xl opacity-80 cursor-pointer hover:opacity-100 hover:text-amber-200 transition-colors">✦</span>
+        </header>
+
+        <main id="artMain" onclick="shuffleArtwork()"
+            class="w-full aspect-square bg-transparent border-2 border-[#282828] relative cursor-pointer overflow-hidden transition-all duration-300">
+
+            <div id="artDisplaySquare" class="art-display w-full h-full"></div>
+
+            <div id="vinylDisplay" class="absolute inset-0 flex items-center justify-center p-6 hidden">
+                <div id="vinylRecord"
+                    class="art-display w-full h-full rounded-full border-4 border-[#222] relative flex items-center justify-center overflow-hidden shadow-lg transition-colors duration-300">
+
+                    <div
+                        class="absolute inset-0 rounded-full bg-gradient-to-tr from-black/40 via-transparent to-white/10 pointer-events-none z-10">
+                    </div>
+
+                    <svg class="absolute inset-0 w-full h-full opacity-60 text-[#111] z-20 pointer-events-none transition-colors duration-300"
+                        viewbox="0 0 100 100" preserveAspectRatio="none">
+                        <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" stroke-width="0.5" />
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="0.5" />
+                        <circle cx="50" cy="50" r="42" fill="none" stroke="currentColor" stroke-width="0.5" />
+                        <circle cx="50" cy="50" r="39" fill="none" stroke="currentColor" stroke-width="0.5" />
+                        <circle cx="50" cy="50" r="36" fill="none" stroke="currentColor" stroke-width="0.5" />
+                        <circle cx="50" cy="50" r="33" fill="none" stroke="currentColor" stroke-width="0.5" />
+                        <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="0.5" />
+                        <circle cx="50" cy="50" r="27" fill="none" stroke="currentColor" stroke-width="0.5" />
+                        <circle cx="50" cy="50" r="24" fill="none" stroke="currentColor" stroke-width="0.5" />
+                        <circle cx="50" cy="50" r="21" fill="none" stroke="currentColor" stroke-width="0.5" />
+                        <circle cx="50" cy="50" r="18" fill="none" stroke="currentColor" stroke-width="0.5" />
+                    </svg>
+
+                    <div
+                        class="w-3 h-3 bg-[#0d0d0d] rounded-full absolute z-30 border border-[#222] shadow-inner transition-colors duration-300">
+                    </div>
+                </div>
+            </div>
+
+            <div id="tenorBadge"
+                class="absolute bottom-2 right-2 text-[#888888] bg-black/80 px-1.5 py-0.5 text-xs tracking-wider z-20 drop-shadow-md font-bold transition-colors duration-300 border border-[#333333]">
+                TENOR
+            </div>
+        </main>
+
+        <section class="flex gap-2">
+            <div
+                class="flex-grow bg-[#161616] border-2 border-[#262626] p-2.5 flex items-center overflow-hidden transition-colors duration-300">
+                <p id="statusText"
+                    class="text-sm text-[#aaaaaa] uppercase tracking-wider truncate transition-colors duration-300">
+                    PRESS PLAY TO BEGIN
+                    LISTENING</p>
+            </div>
+            <button onclick="openSettingsModal()"
+                class="retro-btn p-2.5 flex items-center justify-center text-[#888888] hover:text-white transition-colors duration-300"
+                title="Settings">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </button>
+        </section>
+
+        <section class="grid grid-cols-3 gap-2 text-center">
+            <button id="timerBtn" onclick="handleTimerTap()"
+                class="retro-btn p-2 flex flex-col items-center gap-1 border-b-2 border-b-amber-500/80 transition-colors duration-300">
+                <svg id="timerIcon" xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5 text-[#888888] transition-colors duration-300" fill="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                        d="M12,2A10,10,0,1,0,22,12,10,10,0,0,0,12,2Zm0,18a8,8,0,1,1,8-8A8,8,0,0,1,12,20Zm1-13.41V12.59a2,2,0,0,1,0,3.41A1.5,1.5,0,0,0,13,17a1,1,0,0,0,1-1v-.59a3.5,3.5,0,0,0-2-3.41V6.59A1,1,0,0,0,13,6.59Z" />
+                </svg>
+                <span id="timerLabel" class="text-xs text-[#cccccc] transition-colors duration-300">TIMER · <span
+                        class="japanese-text text-[10px]">計時</span></span>
+            </button>
+
+            <button id="rainBtn" onclick="toggleRain()"
+                class="retro-btn p-2 flex flex-col items-center gap-1 border-b-2 border-b-cyan-600 relative transition-colors duration-300">
+                <svg id="rainIcon" xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5 text-[#888888] transition-colors duration-300" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 11c1.33 0 2.67.67 3.33 1.67.67 1 .67 2.33 0 3.33C14.67 17.33 13.33 18 12 18s-2.67-.67-3.33-1.67C8 15.33 8 14 8.67 13 9.33 11.67 10.67 11 12 11Z" />
+                </svg>
+                <span id="rainLabel" class="text-xs text-[#cccccc] transition-colors duration-300">RAIN · <span
+                        class="japanese-text text-[10px]">雨</span></span>
+                <span id="rainIndicator"
+                    class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-cyan-400 rounded-full hidden animate-pulse"></span>
+            </button>
+
+            <button id="vinylBtn" onclick="toggleVinylMode()"
+                class="retro-btn p-2 flex flex-col items-center gap-1 relative transition-colors duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[#888888] transition-colors duration-300"
+                    fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm0 18a8 8 0 118-8 8 8 0 01-8 8z" />
+                    <path d="M12 7a5 5 0 105 5 5 5 0 00-5-5zm0 8a3 3 0 113-3 3 3 0 01-3 3z" />
+                </svg>
+                <span class="text-xs text-[#cccccc] transition-colors duration-300">VINYL · <span
+                        class="japanese-text text-[10px]">録音</span></span>
+                <span id="vinylIndicator" class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-rose-500 hidden"></span>
+            </button>
+        </section>
+
+        <section class="grid grid-cols-[1fr,1.8fr] gap-2">
+
+            <button id="playBtn" onclick="togglePlay()"
+                class="retro-btn border-b-4 border-b-rose-600 p-4 flex flex-col items-center justify-center gap-1 aspect-square transition-colors duration-300">
+                <svg id="playIcon" class="h-10 w-10 text-white fill-current transition-colors duration-300"
+                    viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                </svg>
+                <span id="playLabel" class="text-sm text-[#aaaaaa] transition-colors duration-300">PLAY · <span
+                        class="japanese-text text-[11px]">再生</span></span>
+            </button>
+
+            <div class="flex flex-col gap-2 justify-between">
+
+                <div
+                    class="bg-[#161616] border-2 border-[#262626] p-3 relative flex-grow flex items-center justify-center transition-colors duration-300">
+                    <span id="stationTitle"
+                        class="text-sm text-[#ffffff] tracking-wider truncate px-2 transition-colors duration-300">CHILL
+                        LOFI ·
+                        <span class="japanese-text text-xs">主要駅</span></span>
+                    <span class="absolute top-1 right-2 text-rose-500 text-[10px] font-bold">HQ</span>
+                    <div class="absolute bottom-0 left-0 right-0 h-1 bg-[#2fd079]"></div>
+                </div>
+
+                <button onclick="nextTrack()"
+                    class="retro-btn p-3 text-center flex-grow flex items-center justify-center transition-colors duration-300">
+                    <span class="text-xs text-[#aaaaaa] transition-colors duration-300">SCAN STATIONS · <span
+                            class="japanese-text text-[10px]">他検索</span></span>
+                </button>
+
+            </div>
+        </section>
+
+    </div>
+
+    <div id="settingsModal"
+        class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4 hidden transition-colors duration-300">
+        <div
+            class="w-full max-w-xs bg-[#121212] border-2 border-[#2a2a2a] p-4 flex flex-col gap-4 shadow-2xl transition-colors duration-300">
+            <div
+                class="text-lg text-[#f0f0f0] border-b border-[#222222] pb-1 uppercase tracking-wider flex justify-between items-center transition-colors duration-300">
+                <span>SYSTEM SETTINGS</span>
+                <button onclick="closeSettingsModal()"
+                    class="text-[#888888] hover:text-rose-500 transition-colors">✕</button>
+            </div>
+
+            <div class="flex flex-col py-2">
+                <label class="text-xs text-[#aaaaaa] block mb-1.5 transition-colors duration-300">COLOR THEME</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="darkThemeBtn" onclick="setTheme('dark')"
+                        class="retro-btn py-1.5 text-xs text-amber-400 border-amber-600/50 bg-[#1f2937] transition-all duration-300">DARK</button>
+                    <button id="lightThemeBtn" onclick="setTheme('light')"
+                        class="retro-btn py-1.5 text-xs text-[#888888] hover:text-[#cccccc] transition-all duration-300">LIGHT</button>
+                </div>
+            </div>
+
+            <button onclick="closeSettingsModal()"
+                class="retro-btn py-2 text-xs text-[#e0e0e0] font-bold mt-1 hover:text-amber-400 transition-colors duration-300">SAVE
+                & CLOSE</button>
+        </div>
+    </div>
+
+    <div id="comingSoonModal" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4 hidden">
+        <div
+            class="w-full max-w-xs bg-[#121212] border-2 border-[#2a2a2a] p-4 flex flex-col gap-3 shadow-2xl text-center transition-colors duration-300">
+            <div
+                class="text-base text-amber-400 border-b border-[#222222] pb-1 uppercase tracking-wider transition-colors duration-300">
+                NOTICE</div>
+            <p class="text-sm text-[#e0e0e0] py-2 transition-colors duration-300">Feature coming soon</p>
+            <button onclick="closeComingSoonModal()"
+                class="retro-btn py-1.5 px-6 text-xs text-amber-400 font-bold self-center transition-colors duration-300">OK</button>
+        </div>
+    </div>
+
+    <div id="timerModal" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4 hidden">
+        <div
+            class="w-full max-w-xs bg-[#121212] border-2 border-[#2a2a2a] p-4 flex flex-col gap-3 shadow-2xl transition-colors duration-300">
+            <div
+                class="text-lg text-amber-400 border-b border-[#222222] pb-1 uppercase tracking-wider transition-colors duration-300">
+                SET FOCUS TIMER
+            </div>
+            <p class="text-xs text-[#aaaaaa] transition-colors duration-300">Select duration (mins):</p>
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="selectPresetTimer(15)"
+                    class="retro-btn py-2 text-sm text-amber-300 transition-colors duration-300">15m</button>
+                <button onclick="selectPresetTimer(25)"
+                    class="retro-btn py-2 text-sm text-amber-300 transition-colors duration-300">25m</button>
+                <button onclick="selectPresetTimer(45)"
+                    class="retro-btn py-2 text-sm text-amber-300 transition-colors duration-300">45m</button>
+            </div>
+            <div class="flex items-center gap-2 mt-1">
+                <input id="customMinutesInput" type="number" min="1" max="180" placeholder="Custom..."
+                    class="w-full bg-[#1a1a1a] border border-[#333333] p-1.5 text-sm text-[#e0e0e0] focus:outline-none focus:border-amber-500 transition-colors duration-300">
+                <button onclick="applyCustomTimer()"
+                    class="retro-btn px-3 py-1.5 text-xs text-amber-400 font-bold transition-colors duration-300">SET</button>
+            </div>
+            <button onclick="closeTimerModal()"
+                class="retro-btn py-1.5 text-xs text-[#888888] mt-1 transition-colors duration-300">CANCEL</button>
+        </div>
+    </div>
+
+    <div id="resetModal" class="fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4 hidden">
+        <div
+            class="w-full max-w-xs bg-[#121212] border-2 border-[#2a2a2a] p-4 flex flex-col gap-3 shadow-2xl text-center transition-colors duration-300">
+            <div
+                class="text-base text-rose-500 border-b border-[#222222] pb-1 uppercase tracking-wider transition-colors duration-300">
+                RESET TIMER?
+            </div>
+            <p class="text-xs text-[#aaaaaa] transition-colors duration-300">Are you sure you want to stop the active
+                timer?</p>
+            <div class="grid grid-cols-2 gap-2 mt-2">
+                <button onclick="confirmResetTimer()"
+                    class="retro-btn py-2 text-xs text-rose-400 border-rose-800/60 transition-colors duration-300">YES,
+                    RESET</button>
+                <button onclick="closeResetModal()"
+                    class="retro-btn py-2 text-xs text-[#888888] transition-colors duration-300">KEEP RUNNING</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ARTWORK PLAYLIST
+        const artworks = [
+            "https://media1.tenor.com/m/nySkQmq76FEAAAAd/pixel-art.gif",
+            "https://media1.tenor.com/m/-4gjazbp4QgAAAAd/aesthetically-aesthetic.gif",
+            "https://media1.tenor.com/m/u8udnFc2aooAAAAd/streets-quiet.gif",
+            "https://media1.tenor.com/m/zzhMh-fSdfUAAAAd/chill-cat.gif",
+            "https://media1.tenor.com/m/hnE1IGzaRxkAAAAd/nature-calm.gif",
+            "https://media1.tenor.com/m/mVyaQ0EXg9EAAAAd/girl-relax.gif",
+            "https://media1.tenor.com/m/40EiJbBjIvYAAAAd/pixel.gif",
+            "https://media1.tenor.com/m/7H9rT9yYkeoAAAAd/stuff.gif",
+            "https://media1.tenor.com/m/a2rxlFSKMHsAAAAd/pond-grass.gif",
+            "https://media1.tenor.com/m/9fChdan7amUAAAAd/aesthetic-art.gif",
+            "https://media1.tenor.com/m/2H2fBP1-BJMAAAAd/pixel.gif",
+            "https://media1.tenor.com/m/ac4i5Dao5OEAAAAd/saturday-calm.gif",
+            "https://media1.tenor.com/m/pdfixnYkMrcAAAAd/pixel-art-tree.gif",
+            "https://media1.tenor.com/m/iedLCcqQp_MAAAAd/relaxing.gif"
+        ];
+
+        // EXPANDED 10-TRACK AD-FREE PLAYLIST
+        const trackPlaylist = [
+            { name: "CHILL STUDY", url: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3" }
+        ];
+
+        let currentArtIndex = Math.floor(Math.random() * artworks.length);
+
+        let currentTrackIndex = 0;
+        let isPlaying = false;
+        let isVinylMode = false;
+
+        // ZEN MODE & POMODORO VARIABLES
+        let isZenMode = false;
+        let zenClockInterval = null;
+        let zenDisplayMode = 'clock'; // 'clock', 'focus', 'break'
+
+        const ZEN_FOCUS_DUR = 25 * 60;
+        const ZEN_BREAK_DUR = 5 * 60;
+        let zenTimeLeft = ZEN_FOCUS_DUR;
+
+        let audio = new Audio(trackPlaylist[currentTrackIndex].url);
+
+        const playBtn = document.getElementById("playBtn");
+        const playIcon = document.getElementById("playIcon");
+        const playLabel = document.getElementById("playLabel");
+        const statusText = document.getElementById("statusText");
+        const stationTitle = document.getElementById("stationTitle");
+
+        const artDisplaySquare = document.getElementById("artDisplaySquare");
+        const vinylRecord = document.getElementById("vinylRecord");
+        const zenModeOverlay = document.getElementById("zenModeOverlay");
+        const zenTimeDisplay = document.getElementById("zenTimeDisplay");
+        const zenTimerLabel = document.getElementById("zenTimerLabel");
+
+        const comingSoonModal = document.getElementById("comingSoonModal");
+        const settingsModal = document.getElementById("settingsModal");
+
+        // Set initial artwork on all visual holders
+        const initialArtUrl = `url('${artworks[currentArtIndex]}')`;
+        artDisplaySquare.style.backgroundImage = initialArtUrl;
+        vinylRecord.style.backgroundImage = initialArtUrl;
+        zenModeOverlay.style.backgroundImage = initialArtUrl;
+
+        updateTrackUI();
+
+        function updateTrackUI() {
+            const track = trackPlaylist[currentTrackIndex];
+            stationTitle.innerHTML = `${track.name} · <span class="japanese-text text-xs">主要駅</span>`;
+        }
+
+        // AUTO-ADVANCE TO NEXT TRACK WHEN CURRENT FINISHES
+        audio.addEventListener("ended", () => {
+            nextTrack();
+        });
+
+        function nextTrack() {
+            currentTrackIndex = (currentTrackIndex + 1) % trackPlaylist.length;
+            audio.pause();
+            audio.src = trackPlaylist[currentTrackIndex].url;
+            updateTrackUI();
+
+            if (isPlaying) {
+                statusText.innerText = "LOADING NEXT TRACK...";
+                audio.play().catch(err => {
+                    console.error("Track autoplay error:", err);
+                    nextTrack();
+                });
+            } else {
+                statusText.innerText = "STATION CHANGED";
+            }
+        }
+
+        // -------------------------------------------------------------
+        // DYNAMIC GREETING LOGIC
+        // -------------------------------------------------------------
+        function updateGreeting() {
+            const hour = new Date().getHours(); // Gets current hour (0-23)
+            const greetingElement = document.getElementById("greetingText");
+            
+            if (hour < 12) {
+                greetingElement.innerText = "Good Morning";
+            } else if (hour < 18) {
+                greetingElement.innerText = "Good Afternoon";
+            } else {
+                greetingElement.innerText = "Good Evening";
+            }
+        }
+
+        // Run the function immediately when the page loads
+        updateGreeting();
+
+        // Run the function immediately when the page loads
+        updateGreeting();
+
+        // -------------------------------------------------------------
+        // LOCAL "rain2.mp3" AUDIO OVERLAY LOGIC
+        // -------------------------------------------------------------
+        let rainAudio = new Audio("rain2.mp3");
+        rainAudio.loop = true;
+        rainAudio.volume = 0.2; // Set smooth background level
+        
+        // ADD THIS LINE:
+        let timerAudio = new Audio("timer.mp3");
+
+        let isRainPlaying = false;
+
+        const rainBtn = document.getElementById("rainBtn");
+        const rainIcon = document.getElementById("rainIcon");
+        const rainLabel = document.getElementById("rainLabel");
+        const rainIndicator = document.getElementById("rainIndicator");
+
+        function toggleRain() {
+            if (isRainPlaying) {
+                rainAudio.pause();
+                isRainPlaying = false;
+
+                // UI Reset
+                rainBtn.classList.remove("border-cyan-400", "bg-[#1f2937]");
+                rainIcon.classList.add("text-[#888888]");
+                rainIcon.classList.remove("text-cyan-400");
+                rainLabel.classList.remove("text-cyan-300");
+                rainIndicator.classList.add("hidden");
+            } else {
+                rainAudio.play().then(() => {
+                    isRainPlaying = true;
+
+                    // UI Active Styling
+                    rainBtn.classList.add("border-cyan-400", "bg-[#1f2937]");
+                    rainIcon.classList.remove("text-[#888888]");
+                    rainIcon.classList.add("text-cyan-400");
+                    rainLabel.classList.add("text-cyan-300");
+                    rainIndicator.classList.remove("hidden");
+                }).catch(err => {
+                    console.error("Could not play rain2.mp3.", err);
+                    alert("Please place 'rain2.mp3' in the exact same folder as your HTML file.");
+                });
+            }
+        }
+
+        // -------------------------------------------------------------
+        // NEW VINYL MODE LOGIC
+        // -------------------------------------------------------------
+        function toggleVinylMode() {
+            isVinylMode = !isVinylMode;
+
+            const vinylBtn = document.getElementById("vinylBtn");
+            const vinylIndicator = document.getElementById("vinylIndicator");
+            const vinylDisplay = document.getElementById("vinylDisplay");
+
+            // Elements to target
+            const artMain = document.getElementById("artMain");
+            const tenorBadge = document.getElementById("tenorBadge");
+
+            if (isVinylMode) {
+                // Turn ON vinyl mode
+                vinylDisplay.classList.remove("hidden");
+                artDisplaySquare.classList.add("hidden");
+                vinylRecord.classList.add("vinyl-spinning");
+
+                // Remove the square border and hide the badge
+                artMain.classList.remove("border-2", "border-[#282828]");
+                tenorBadge.classList.add("hidden");
+
+                // UI Update for button
+                vinylBtn.classList.add("border-b-rose-600", "bg-[#1f2937]");
+                vinylIndicator.classList.remove("hidden");
+            } else {
+                // Turn OFF vinyl mode
+                vinylDisplay.classList.add("hidden");
+                artDisplaySquare.classList.remove("hidden");
+                vinylRecord.classList.remove("vinyl-spinning");
+
+                // Bring back the square border and the badge
+                artMain.classList.add("border-2", "border-[#282828]");
+                tenorBadge.classList.remove("hidden");
+
+                // UI Reset for button
+                vinylBtn.classList.remove("border-b-rose-600", "bg-[#1f2937]");
+                vinylIndicator.classList.add("hidden");
+            }
+        }
+
+        // -------------------------------------------------------------
+        // ZEN MODE & POMODORO LOGIC
+        // -------------------------------------------------------------
+        function toggleZenMode(e) {
+            // Prevent event from bubbling to shuffleArtwork if button is clicked
+            if (e) e.stopPropagation();
+
+            isZenMode = !isZenMode;
+
+            if (isZenMode) {
+                // Show Overlay
+                zenModeOverlay.classList.remove("hidden");
+                zenModeOverlay.classList.add("flex");
+
+                // Request Fullscreen
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen().catch((err) => {
+                        console.log("Fullscreen request failed:", err);
+                    });
+                }
+
+                // Initial update and start clock/timer cycle
+                updateZenDisplay();
+                zenClockInterval = setInterval(updateZenDisplay, 1000);
+            } else {
+                // Hide Overlay
+                zenModeOverlay.classList.add("hidden");
+                zenModeOverlay.classList.remove("flex");
+
+                // Exit Fullscreen
+                if (document.fullscreenElement) {
+                    document.exitFullscreen().catch((err) => {
+                        console.log("Exit fullscreen failed:", err);
+                    });
+                }
+
+                // Pause UI updates to save memory
+                clearInterval(zenClockInterval);
+            }
+        }
+
+        function toggleZenPomodoro(e) {
+            // Prevent event from bubbling up and shuffling artwork
+            if (e) e.stopPropagation();
+
+            // Toggles between standard Clock and Pomodoro Focus Mode
+            if (zenDisplayMode === 'clock') {
+                zenDisplayMode = 'focus';
+                zenTimeLeft = ZEN_FOCUS_DUR;
+            } else {
+                zenDisplayMode = 'clock';
+            }
+            updateZenDisplay(); // Force UI update immediately on click
+        }
+
+        function updateZenDisplay() {
+            if (zenDisplayMode === 'clock') {
+                const now = new Date();
+                let hours = now.getHours();
+                let minutes = now.getMinutes();
+
+                // Format single digits
+                hours = hours < 10 ? '0' + hours : hours;
+                minutes = minutes < 10 ? '0' + minutes : minutes;
+
+                zenTimeDisplay.innerText = `${hours}:${minutes}`;
+                zenTimerLabel.classList.add("hidden");
+            } else {
+                // Handle Pomodoro Countdown
+                zenTimeLeft--;
+
+                if (zenTimeLeft < 0) {
+
+                    handleTimerComplete(); // Triggers the beep and pauses music
+
+                    // Swap modes when countdown hits 0
+                    if (zenDisplayMode === 'focus') {
+                        zenDisplayMode = 'break';
+                        zenTimeLeft = ZEN_BREAK_DUR;
+                    } else {
+                        zenDisplayMode = 'focus';
+                        zenTimeLeft = ZEN_FOCUS_DUR;
+                    }
+                }
+
+                // Calculate minutes and seconds
+                let m = Math.floor(zenTimeLeft / 60);
+                let s = zenTimeLeft % 60;
+
+                m = m < 10 ? '0' + m : m;
+                s = s < 10 ? '0' + s : s;
+
+                zenTimeDisplay.innerText = `${m}:${s}`;
+
+                // Update Label UI
+                zenTimerLabel.innerText = zenDisplayMode === 'focus' ? 'FOCUS' : 'BREAK';
+                zenTimerLabel.classList.remove("hidden", "text-cyan-400", "text-amber-400");
+                zenTimerLabel.classList.add(zenDisplayMode === 'focus' ? "text-amber-400" : "text-cyan-400");
+            }
+        }
+
+        // -------------------------------------------------------------
+        // SETTINGS & THEME LOGIC
+        // -------------------------------------------------------------
+        function openSettingsModal() { settingsModal.classList.remove("hidden"); }
+        function closeSettingsModal() { settingsModal.classList.add("hidden"); }
+
+        function setTheme(theme) {
+            const darkBtn = document.getElementById("darkThemeBtn");
+            const lightBtn = document.getElementById("lightThemeBtn");
+
+            if (theme === 'light') {
+                document.body.classList.add("light-mode");
+
+                // Set Light button to active
+                lightBtn.classList.add("text-amber-400", "border-amber-600/50", "bg-[#1f2937]");
+                lightBtn.classList.remove("text-[#888888]", "hover:text-[#cccccc]");
+
+                // Set Dark button to inactive
+                darkBtn.classList.remove("text-amber-400", "border-amber-600/50", "bg-[#1f2937]");
+                darkBtn.classList.add("text-[#888888]", "hover:text-[#cccccc]");
+            } else {
+                document.body.classList.remove("light-mode");
+
+                // Set Dark button to active
+                darkBtn.classList.add("text-amber-400", "border-amber-600/50", "bg-[#1f2937]");
+                darkBtn.classList.remove("text-[#888888]", "hover:text-[#cccccc]");
+
+                // Set Light button to inactive
+                lightBtn.classList.remove("text-amber-400", "border-amber-600/50", "bg-[#1f2937]");
+                lightBtn.classList.add("text-[#888888]", "hover:text-[#cccccc]");
+            }
+        }
+
+        // COMING SOON MODAL HELPERS
+        function openComingSoonModal() { comingSoonModal.classList.remove("hidden"); }
+        function closeComingSoonModal() { comingSoonModal.classList.add("hidden"); }
+
+        // TIMER LOGIC
+        let timerInterval = null;
+        let totalSecondsRemaining = 0;
+        let isTimerPaused = false;
+        let isTimerActive = false;
+        let tapTimeout = null;
+
+        const timerLabel = document.getElementById("timerLabel");
+        const timerModal = document.getElementById("timerModal");
+        const resetModal = document.getElementById("resetModal");
+        const timerIcon = document.getElementById("timerIcon");
+
+        function handleTimerTap() {
+            if (tapTimeout === null) {
+                tapTimeout = setTimeout(() => {
+                    tapTimeout = null;
+                    onSingleTapTimer();
+                }, 300);
+            } else {
+                clearTimeout(tapTimeout);
+                tapTimeout = null;
+                onDoubleTapTimer();
+            }
+        }
+
+        function onSingleTapTimer() {
+            if (!isTimerActive) { openTimerModal(); }
+            else { isTimerPaused ? resumeTimer() : pauseTimer(); }
+        }
+
+        function onDoubleTapTimer() {
+            if (isTimerActive) { openResetModal(); }
+        }
+
+        function startTimer(minutes) {
+            totalSecondsRemaining = minutes * 60;
+            isTimerActive = true;
+            isTimerPaused = false;
+            closeTimerModal();
+            runTimerInterval();
+        }
+
+        function runTimerInterval() {
+            updateTimerDisplay();
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (!isTimerPaused) {
+                    totalSecondsRemaining--;
+                    if (totalSecondsRemaining <= 0) {
+                        stopTimer();
+                        handleTimerComplete(); // Triggers the beep and pauses music
+                    }
+                    else { updateTimerDisplay(); }
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() { isTimerPaused = true; updateTimerDisplay(); }
+        function resumeTimer() { isTimerPaused = false; updateTimerDisplay(); }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(totalSecondsRemaining / 60);
+            const s = totalSecondsRemaining % 60;
+            const formattedTime = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            if (timerIcon) timerIcon.style.display = "none";
+            timerLabel.innerHTML = `<span class="${isTimerPaused ? 'text-amber-500 animate-pulse' : 'text-amber-400'} text-lg font-bold py-1 block tracking-normal">${formattedTime}</span>`;
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            totalSecondsRemaining = 0;
+            isTimerActive = false;
+            isTimerPaused = false;
+            if (timerIcon) timerIcon.style.display = "block";
+            timerLabel.innerHTML = `TIMER · <span class="japanese-text text-[10px]">計時</span>`;
+        }
+
+        function confirmResetTimer() { stopTimer(); closeResetModal(); }
+        function openTimerModal() { timerModal.classList.remove("hidden"); }
+        function closeTimerModal() { timerModal.classList.add("hidden"); }
+        function openResetModal() { resetModal.classList.remove("hidden"); }
+        function closeResetModal() { resetModal.classList.add("hidden"); }
+        function selectPresetTimer(mins) { startTimer(mins); }
+
+        function applyCustomTimer() {
+            const val = parseInt(document.getElementById("customMinutesInput").value, 10);
+            if (!isNaN(val) && val > 0) { startTimer(val); }
+        }
+
+        // AUDIO ENGINE LISTENERS
+        audio.addEventListener("playing", () => {
+            statusText.innerText = "NOW STREAMING LIVE";
+        });
+
+        audio.addEventListener("waiting", () => {
+            if (isPlaying) statusText.innerText = "LOADING AUDIO...";
+        });
+
+        audio.addEventListener("error", (e) => {
+            console.error("Audio Load Error:", e);
+            if (isPlaying) {
+                statusText.innerText = "SKIP TO NEXT...";
+                setTimeout(nextTrack, 1000);
+            }
+        });
+
+        function shuffleArtwork() {
+            if (artworks.length <= 1) return;
+            let newIndex;
+            do {
+                newIndex = Math.floor(Math.random() * artworks.length);
+            } while (newIndex === currentArtIndex);
+
+            currentArtIndex = newIndex;
+            const newArtUrl = `url('${artworks[currentArtIndex]}')`;
+
+            // Update all possible artwork containers (including Zen Mode)
+            artDisplaySquare.style.backgroundImage = newArtUrl;
+            vinylRecord.style.backgroundImage = newArtUrl;
+            zenModeOverlay.style.backgroundImage = newArtUrl;
+        }
+
+        function togglePlay() {
+            if (isPlaying) {
+                audio.pause();
+                resetPlayUI();
+                statusText.innerText = "PAUSED";
+            } else {
+                statusText.innerText = "CONNECTING...";
+                isPlaying = true;
+                playIcon.innerHTML = `<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>`;
+                playLabel.innerHTML = `PAUSE · <span class="japanese-text text-[11px]">停止</span>`;
+
+                audio.play().then(() => {
+                    statusText.innerText = "NOW STREAMING LIVE";
+                }).catch((err) => {
+                    console.error("Playback error on start:", err);
+                    resetPlayUI();
+                    statusText.innerText = "TAP AGAIN TO PLAY";
+                });
+            }
+        }
+
+        function resetPlayUI() {
+            isPlaying = false;
+            playIcon.innerHTML = `<path d="M8 5v14l11-7z"/>`;
+            playLabel.innerHTML = `PLAY · <span class="japanese-text text-[11px]">再生</span>`;
+        }
+
+        // -------------------------------------------------------------
+        // NOTIFICATION & AUDIO PAUSE ENGINE
+        // -------------------------------------------------------------
+        function playTimerNudge() {
+            // Reset the audio to the beginning in case it is used multiple times
+            timerAudio.currentTime = 0; 
+            
+            timerAudio.play().catch(err => {
+                console.error("Could not play timer.mp3.", err);
+                alert("Please place 'timer.mp3' in the exact same folder as your HTML file.");
+            });
+        }
+
+        function handleTimerComplete() {
+            playTimerNudge();
+
+            // Auto-pause the main audio stream if it is currently running
+            if (isPlaying) {
+                audio.pause();
+                resetPlayUI();
+                statusText.innerText = "TIME UP - PAUSED";
+            }
+
+            // Auto-pause the rain sound and reset its UI if it's currently running
+            if (isRainPlaying) {
+                toggleRain();
+            }
+        }
+    </script>
+</body>
+
+</html>
