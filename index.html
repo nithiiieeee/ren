@@ -4,14 +4,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ren</title>
+    <title>Ren - Lofi Radio & Focus UI</title>
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" />
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" />
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <script src="artworks.js"></script>
     <script src="playlists.js"></script>
+    <script>
+        if (localStorage.getItem('ren2_ui') === 'modern') {
+            window.location.replace('ui2.html');
+        }
+    </script>
     <style>
-        /* Base styles and Theme Variables */
         :root {
             --bg-color: #121212;
             --text-color: #ffffff;
@@ -40,69 +44,63 @@
             --scrollbar-thumb: #ccc;
         }
 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: monospace, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 412px;
+            background-color: var(--bg-color);
+            padding: 12px 16px 20px 16px;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-            position: relative;
-            transition: background-color 0.3s ease, color 0.3s ease;
-            -webkit-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-            padding-top: 40px;
-        }
-
-        .container {
-            max-width: 650px;
-            width: 100%;
-            text-align: center;
-        }
-
-        /* Typography & Header */
-        .header-row {
-            display: flex;
-            align-items: center;
-            justify-content: center;
             gap: 12px;
-            margin-bottom: 25px;
+            position: relative;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2px;
         }
 
         h1 {
-            font-weight: 300;
-            font-size: 28px;
-            margin: 0;
-            letter-spacing: 1px;
-            padding: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
         }
 
-        p.subtitle {
-            color: var(--subtitle-color);
-            font-size: 14px;
-            margin-bottom: 30px;
-            line-height: 1.5;
-        }
-
-        /* Subtle Settings Button */
         .settings-btn {
             background: transparent;
             border: none;
             color: var(--subtitle-color);
-            font-size: 18px;
+            font-size: 22px;
             cursor: pointer;
             transition: color 0.3s ease, transform 0.3s ease;
-            padding: 0;
+            padding: 4px;
             display: flex;
             align-items: center;
-            margin-bottom: 30px;
-            margin-left: -10px;
+            justify-content: center;
         }
 
         .settings-btn:hover {
@@ -114,34 +112,41 @@
         .art-wrapper {
             position: relative;
             width: 100%;
-            max-width: 350px;
-            margin: 0 auto 40px auto;
+            aspect-ratio: 1 / 1;
+            background-color: var(--card-bg);
+            border-radius: 2px;
+            overflow: hidden;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
 
         .art-display {
             width: 100%;
-            aspect-ratio: 1 / 1;
-            height: auto;
+            height: 100%;
             background-size: cover;
             background-position: center;
-            border-radius: 10px;
-            border: 1px solid var(--card-border);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             cursor: pointer;
             transition: opacity 0.3s ease, filter 0.3s ease;
             image-rendering: pixelated;
-            user-select: none;
-            -webkit-user-select: none;
         }
 
         .art-display:hover {
-            opacity: 0.8;
+            opacity: 0.85;
         }
 
-        .art-display.timer-active,
-        .art-display.timer-active:hover {
+        .art-display.timer-active {
             filter: brightness(0.80);
-            opacity: 1;
+        }
+
+        .giphy-badge {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: bold;
+            letter-spacing: 1px;
+            pointer-events: none;
         }
 
         /* Timer Overlay Widget */
@@ -150,34 +155,31 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: transparent;
-            padding: 0;
-            border: none;
             text-align: center;
             cursor: pointer;
-            user-select: none;
             z-index: 10;
             display: none;
         }
 
         .timer-time {
             font-family: 'Press Start 2P', monospace;
-            font-size: clamp(24px, 6vw, 42px);
+            font-size: 32px;
             color: #fff;
             margin-bottom: 8px;
-            letter-spacing: 4px;
+            letter-spacing: 3px;
             text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
         }
 
         .timer-status {
             font-family: 'Press Start 2P', monospace;
-            font-size: 9px;
+            font-size: 8px;
             letter-spacing: 2px;
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(255, 255, 255, 0.8);
             text-transform: uppercase;
             text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
         }
 
+        /* Timer Confirm Popup */
         .timer-confirm {
             position: fixed;
             inset: 0;
@@ -188,11 +190,10 @@
             justify-content: center;
             z-index: 999999;
             padding: 20px;
-            box-sizing: border-box;
         }
 
         .timer-confirm p {
-            font-size: 14px;
+            font-size: 12px;
             margin-bottom: 20px;
             letter-spacing: 2px;
             color: #fff;
@@ -209,10 +210,10 @@
             border: 1px solid var(--card-border);
             color: var(--text-color);
             padding: 10px 20px;
-            border-radius: 8px;
+            border-radius: 4px;
             cursor: pointer;
             font-family: inherit;
-            font-size: 12px;
+            font-size: 11px;
             letter-spacing: 1px;
         }
 
@@ -221,43 +222,39 @@
             background: var(--card-hover);
         }
 
-        /* Fullscreen Artwork Mode */
-        body.fullscreen-art .container>*:not(#artWrapper):not(.zen-clock):not(.zen-timer-clock) {
+        /* Fullscreen Zen Mode */
+        body.fullscreen-art .app-container>*:not(.art-wrapper):not(.zen-clock):not(.zen-timer-clock) {
             display: none !important;
         }
 
         body.fullscreen-art {
             padding: 0;
-            justify-content: center;
             background-color: #000;
         }
 
-        body.fullscreen-art .container {
+        body.fullscreen-art .app-container {
             max-width: 100%;
             height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0;
-            position: relative;
+            padding: 0;
         }
 
         body.fullscreen-art .art-wrapper {
             position: absolute;
-            top: 0;
-            left: 0;
-            max-width: none;
-            width: 100vw;
-            height: 100vh;
-            margin: 0;
-        }
-
-        body.fullscreen-art .art-display {
+            inset: 0;
             width: 100vw;
             height: 100vh;
             border-radius: 0;
             border: none;
             box-shadow: none;
+        }
+
+        body.fullscreen-art .art-display {
+            width: 100vw;
+            height: 100vh;
             filter: brightness(0.80);
         }
 
@@ -269,8 +266,8 @@
             position: fixed;
             bottom: 25px;
             left: 25px;
-            background: none;
-            border: none;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             color: #ffffff;
             width: 45px;
             height: 45px;
@@ -293,34 +290,24 @@
             display: flex;
         }
 
-        body.fullscreen-art::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
-            background-size: 100% 4px;
-            z-index: 1550;
-            pointer-events: none;
-        }
-
-        .zen-clock {
+        .zen-clock,
+        .zen-timer-clock {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             font-family: 'Press Start 2P', monospace;
-            font-size: clamp(36px, 8vw, 72px);
-            font-weight: 400;
             color: #fff;
-            letter-spacing: 6px;
-            pointer-events: none;
             display: none;
             z-index: 1500;
-            -webkit-font-smoothing: none;
+            text-shadow: 0 4px 16px rgba(0, 0, 0, 0.8);
             image-rendering: pixelated;
+        }
+
+        .zen-clock {
+            font-size: clamp(36px, 8vw, 64px);
+            letter-spacing: 6px;
+            pointer-events: none;
         }
 
         body.fullscreen-art .zen-clock.active-clock {
@@ -328,32 +315,20 @@
         }
 
         .zen-timer-clock {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-family: 'Press Start 2P', monospace;
             text-align: center;
-            pointer-events: auto;
             cursor: pointer;
-            display: none;
-            z-index: 1500;
-            -webkit-font-smoothing: none;
-            image-rendering: pixelated;
         }
 
         .zen-timer-time {
-            font-size: clamp(32px, 7vw, 64px);
-            font-weight: 400;
-            color: #fff;
+            font-size: clamp(32px, 7vw, 56px);
             letter-spacing: 6px;
             margin-bottom: 10px;
         }
 
         .zen-timer-status {
-            font-size: 11px;
+            font-size: 10px;
             letter-spacing: 2px;
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(255, 255, 255, 0.8);
             text-transform: uppercase;
         }
 
@@ -363,124 +338,171 @@
 
         /* Player Controls Section */
         .player-controls {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 50px;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 8px;
             width: 100%;
-            max-width: 350px;
-            margin-left: auto;
-            margin-right: auto;
         }
 
-        .play-btn-circle {
-            background-color: transparent;
-            color: var(--text-color);
+        .play-card {
+            background-color: var(--card-bg);
             border: 1px solid var(--card-border);
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            font-size: 18px;
-            cursor: pointer;
-            transition: all 0.3s ease;
             display: flex;
-            align-items: center;
+            flex-direction: column;
             justify-content: center;
-            flex-shrink: 0;
-            padding-left: 2px;
+            align-items: center;
+            gap: 6px;
+            height: 64px;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            position: relative;
+            overflow: hidden;
         }
 
-        .play-btn-circle.playing {
-            background-color: var(--btn-active-bg);
-            color: var(--btn-active-text);
-            border-color: var(--btn-active-bg);
-            font-size: 22px;
-            padding-left: 3px;
+        .play-card:active {
+            transform: scale(0.98);
+        }
+
+        .play-card:hover {
+            background-color: var(--card-hover);
+        }
+
+        .play-card i {
+            font-size: 24px;
+            color: var(--text-color);
+        }
+
+        .play-main {
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .play-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: #e53935;
+            transition: background-color 0.3s ease;
+        }
+
+        .play-card.playing::after {
+            background-color: #00e676;
         }
 
         .station-display {
-            flex-grow: 1;
             background-color: var(--card-bg);
             border: 1px solid var(--card-border);
-            padding: 0 25px;
-            height: 60px;
-            border-radius: 30px;
-            font-size: 13px;
+            padding: 0 14px;
+            height: 64px;
+            border-radius: 2px;
+            font-size: 11px;
             color: var(--text-color);
-            letter-spacing: 1px;
-            text-align: left;
+            letter-spacing: 0.5px;
             display: flex;
-            align-items: center;
-            overflow: hidden;
-            white-space: nowrap;
+            flex-direction: column;
+            justify-content: center;
+            gap: 4px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            transition: background 0.3s ease;
+        }
+
+        .station-display:hover {
+            background-color: var(--card-hover);
+        }
+
+        .station-display::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: #00e676;
+        }
+
+        .station-title-text {
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .kanji {
             font-family: sans-serif;
-            font-size: 11px;
+            font-size: 10px;
             opacity: 0.7;
-        }
-
-        .station-display .kanji {
-            margin-left: auto;
         }
 
         /* Ambient Sound Grid */
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 15px;
-            margin-bottom: 50px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
         }
 
         .ambient-btn {
             background-color: var(--card-bg);
             border: 1px solid var(--card-border);
             color: var(--subtitle-color);
-            padding: 16px 10px;
-            border-radius: 12px;
+            padding: 12px 6px;
+            border-radius: 2px;
             cursor: pointer;
             font-family: inherit;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 6px;
             font-size: 18px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ambient-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: #666;
+            transition: background-color 0.3s ease;
+        }
+
+        .ambient-btn.active::after {
+            background-color: #e53935;
         }
 
         .ambient-btn.active {
-            background-color: var(--btn-active-bg);
-            color: var(--btn-active-text);
-            border-color: var(--btn-active-bg);
+            color: var(--text-color);
+            background-color: var(--card-hover);
         }
 
         .ambient-sub {
-            font-size: 11px;
+            font-size: 9px;
             letter-spacing: 0.5px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
+            text-transform: uppercase;
         }
 
-        /* Modal Overlay & Popup Box */
+        /* Modal Overlays & Drawers */
         .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             background-color: rgba(0, 0, 0, 0.75);
             display: flex;
-            align-items: center;
+            align-items: flex-end;
             justify-content: center;
             z-index: 1000;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
         }
 
         .modal-overlay.open {
@@ -490,20 +512,19 @@
 
         .modal-box {
             background-color: var(--modal-bg);
-            border: 1px solid var(--card-border);
-            width: 85%;
-            max-width: 500px;
-            max-height: 95vh;
-            padding: 30px;
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-            text-align: left;
-            position: relative;
-            box-sizing: border-box;
-            transform: translateY(15px);
-            transition: transform 0.3s ease, background-color 0.3s ease;
+            border-top: 1px solid var(--card-border);
+            width: 100%;
+            max-width: 412px;
+            max-height: 85vh;
+            padding: 20px 16px;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.4);
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
             display: flex;
             flex-direction: column;
+            box-sizing: border-box;
         }
 
         .modal-overlay.open .modal-box {
@@ -514,29 +535,26 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
             border-bottom: 1px solid var(--card-border);
-            padding-bottom: 15px;
-            flex-shrink: 0;
         }
 
         .modal-title {
-            font-size: 15px;
-            letter-spacing: 1.5px;
-            margin: 0;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 1px;
             color: var(--text-color);
+            text-transform: uppercase;
         }
 
         .close-btn {
             background: transparent;
             border: none;
             color: var(--subtitle-color);
-            font-size: 20px;
+            font-size: 18px;
             cursor: pointer;
-            transition: color 0.2s ease;
-            padding: 0;
-            display: flex;
-            align-items: center;
+            padding: 2px;
         }
 
         .close-btn:hover {
@@ -544,28 +562,19 @@
         }
 
         .modal-body {
-            font-size: 13px;
+            font-size: 11px;
             color: var(--subtitle-color);
             overflow-y: auto;
-            padding-right: 4px;
             display: flex;
             flex-direction: column;
-            gap: 25px;
-        }
-
-        .modal-body::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .modal-body::-webkit-scrollbar-thumb {
-            background: var(--scrollbar-thumb);
-            border-radius: 4px;
+            gap: 16px;
+            padding-right: 2px;
         }
 
         .modal-view {
             display: none;
             flex-direction: column;
-            gap: 22px;
+            gap: 16px;
         }
 
         .modal-view.active {
@@ -575,36 +584,24 @@
         .info-back-row {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             cursor: pointer;
             color: var(--text-color);
-            font-size: 12px;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
+            font-size: 11px;
             background: none;
             border: none;
             padding: 0;
             font-family: inherit;
         }
 
-        .info-back-row:hover {
-            opacity: 0.7;
-        }
-
-        .setting-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
         .settings-section-title {
-            font-size: 11px;
+            font-size: 10px;
             color: var(--subtitle-color);
-            letter-spacing: 1.5px;
+            letter-spacing: 1px;
             text-transform: uppercase;
             border-bottom: 1px solid var(--card-border);
-            padding-bottom: 8px;
-            margin-top: 5px;
+            padding-bottom: 6px;
+            margin-top: 4px;
         }
 
         .sfx-accordion-header {
@@ -612,20 +609,18 @@
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
-            user-select: none;
             padding: 8px 0;
-            transition: color 0.2s ease;
             color: var(--text-color);
-            font-size: 12px;
-            letter-spacing: 1px;
+            font-size: 11px;
             border-bottom: 1px solid var(--card-border);
+            letter-spacing: 0.5px;
         }
 
         .sfx-accordion-content {
             display: none;
             flex-direction: column;
-            gap: 15px;
-            padding-top: 10px;
+            gap: 12px;
+            padding-top: 8px;
         }
 
         .sfx-accordion-content.open {
@@ -635,7 +630,7 @@
         .station-list {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
 
         .station-option-btn,
@@ -643,12 +638,12 @@
             background: var(--slider-bg);
             border: 1px solid var(--card-border);
             color: var(--subtitle-color);
-            padding: 12px 15px;
-            border-radius: 10px;
+            padding: 12px 14px;
+            border-radius: 2px;
             cursor: pointer;
             font-family: inherit;
-            font-size: 12px;
-            letter-spacing: 1px;
+            font-size: 11px;
+            letter-spacing: 0.5px;
             text-align: left;
             display: flex;
             align-items: center;
@@ -668,6 +663,13 @@
             background-color: var(--btn-active-bg);
             color: var(--btn-active-text);
             border-color: var(--btn-active-bg);
+            font-weight: bold;
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         .setting-label {
@@ -675,16 +677,15 @@
             justify-content: space-between;
             align-items: center;
             color: var(--text-color);
-            font-size: 12px;
-            letter-spacing: 1px;
+            font-size: 11px;
         }
 
         .custom-timer-input-group {
             display: none;
             flex-direction: column;
-            gap: 6px;
-            margin-top: 4px;
-            padding-left: 10px;
+            gap: 4px;
+            margin-top: 2px;
+            padding-left: 8px;
             border-left: 2px solid var(--card-border);
         }
 
@@ -692,33 +693,22 @@
             display: flex;
         }
 
-        .custom-timer-input-group span {
-            font-size: 11px;
-            color: var(--subtitle-color);
-            letter-spacing: 0.5px;
-        }
-
         .custom-timer-input-group input[type="number"] {
             background: var(--slider-bg);
             border: 1px solid var(--card-border);
             color: var(--text-color);
-            padding: 8px 12px;
-            border-radius: 8px;
+            padding: 8px;
+            border-radius: 2px;
             font-family: inherit;
-            font-size: 13px;
+            font-size: 11px;
             outline: none;
             width: 100%;
-            box-sizing: border-box;
-        }
-
-        .custom-timer-input-group input[type="number"]:focus {
-            border-color: var(--text-color);
         }
 
         .switch {
             position: relative;
             display: inline-block;
-            width: 38px;
+            width: 36px;
             height: 20px;
         }
 
@@ -751,79 +741,57 @@
         }
 
         input:checked+.slider-toggle {
-            background-color: var(--btn-active-bg);
-            border-color: var(--btn-active-bg);
+            background-color: var(--text-color);
+            border-color: var(--text-color);
         }
 
         input:checked+.slider-toggle:before {
-            transform: translateX(18px);
-            background-color: var(--btn-active-text);
+            transform: translateX(16px);
+            background-color: var(--bg-color);
         }
 
         input[type="range"] {
             appearance: none;
             -webkit-appearance: none;
             width: 100%;
-            height: 6px;
+            height: 4px;
             background: var(--slider-bg);
-            border-radius: 3px;
+            border-radius: 2px;
             outline: none;
-            transition: background 0.3s ease;
         }
 
         input[type="range"]::-webkit-slider-thumb {
             appearance: none;
             -webkit-appearance: none;
-            width: 14px;
-            height: 14px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
             background: var(--text-color);
             cursor: pointer;
-            transition: transform 0.1s ease;
-        }
-
-        input[type="range"]::-webkit-slider-thumb:hover {
-            transform: scale(1.2);
         }
 
         .theme-options {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            gap: 6px;
         }
 
         .theme-btn {
             background-color: var(--slider-bg);
             border: 1px solid var(--card-border);
             color: var(--subtitle-color);
-            padding: 10px;
-            border-radius: 8px;
+            padding: 8px;
+            border-radius: 2px;
             cursor: pointer;
             font-family: inherit;
-            font-size: 12px;
-            letter-spacing: 1px;
+            font-size: 10px;
             text-align: center;
-            transition: all 0.2s ease;
-        }
-
-        .theme-btn:hover {
-            border-color: var(--text-color);
-            color: var(--text-color);
         }
 
         .theme-btn.active {
-            background-color: var(--btn-active-bg);
-            color: var(--btn-active-text);
-            border-color: var(--btn-active-bg);
-        }
-
-        .footer {
-            color: #444;
-            font-size: 12px;
-            border-top: 1px solid var(--card-border);
-            padding-top: 25px;
-            letter-spacing: 1px;
-            line-height: 2;
+            background-color: var(--text-color);
+            color: var(--bg-color);
+            font-weight: bold;
         }
 
         /* VHS Pause Effect Overlay */
@@ -836,7 +804,6 @@
             background-size: 100% 4px, 100% 100%;
             z-index: 11;
             pointer-events: none;
-            border-radius: inherit;
         }
 
         .art-wrapper.paused .art-display {
@@ -847,9 +814,9 @@
 
 <body>
 
-    <div class="container">
-        <div class="header-row">
-            <h1 id="greetingText">Good Evening.</h1>
+    <div class="app-container">
+        <div class="header">
+            <h1 id="greetingText">Good Evening</h1>
             <button class="settings-btn" id="settingsBtn" title="Settings">
                 <i class="ph ph-gear"></i>
             </button>
@@ -870,48 +837,52 @@
         </div>
 
         <div class="player-controls">
-            <button class="play-btn-circle" id="playBtn" title="Play/Stop">
-                <i class="ph-fill ph-play"></i>
-            </button>
-            <div class="station-display" id="stationTitle" title="Click to scan, tap & hold for station list"></div>
+            <div class="play-card" id="playBtn" title="Play/Stop">
+                <i class="ph-fill ph-play" id="playIcon"></i>
+                <div class="play-text-group">
+                    <span class="play-main" id="playMainText"></span>
+                </div>
+            </div>
+            <div class="station-display" id="stationTitle" title="Click to scan, tap & hold for station list">
+                <span class="kanji" style="font-size: 9px;">STATION &middot; 主要駅</span>
+                <span class="station-title-text" id="mainStationNameText">LILO-FI</span>
+            </div>
         </div>
 
         <div class="grid">
             <button class="ambient-btn" data-sound="rain">
                 <i class="ph-fill ph-cloud-rain"></i>
-                <span class="ambient-sub">RAIN &middot; <span class="kanji">雨</span></span>
+                <span class="ambient-sub">RAIN &middot; 雨</span>
             </button>
             <button class="ambient-btn" data-sound="vinyl">
                 <i class="ph-fill ph-disc"></i>
-                <span class="ambient-sub">VINYL &middot; <span class="kanji">録音</span></span>
+                <span class="ambient-sub">VINYL &middot; 録音</span>
             </button>
             <button class="ambient-btn" data-sound="fire">
                 <i class="ph-fill ph-fire"></i>
-                <span class="ambient-sub">FIRE &middot; <span class="kanji">火</span></span>
+                <span class="ambient-sub">FIRE &middot; 火</span>
             </button>
             <button class="ambient-btn" data-sound="ocean">
                 <i class="ph-fill ph-waves"></i>
-                <span class="ambient-sub">OCEAN &middot; <span class="kanji">海</span></span>
+                <span class="ambient-sub">OCEAN &middot; 海</span>
             </button>
             <button class="ambient-btn" data-sound="tape">
                 <i class="ph-fill ph-cassette-tape"></i>
-                <span class="ambient-sub">TAPE &middot; <span class="kanji">雑音</span></span>
+                <span class="ambient-sub">TAPE &middot; 雑音</span>
             </button>
             <button class="ambient-btn" data-sound="woods">
                 <i class="ph-fill ph-leaf"></i>
-                <span class="ambient-sub">WOODS &middot; <span class="kanji">森林</span></span>
+                <span class="ambient-sub">WOODS &middot; 森林</span>
             </button>
             <button class="ambient-btn" data-sound="river">
                 <i class="ph-fill ph-drop"></i>
-                <span class="ambient-sub">RIVER &middot; <span class="kanji">流</span></span>
+                <span class="ambient-sub">RIVER &middot; 流</span>
             </button>
             <button class="ambient-btn" data-sound="storm">
                 <i class="ph-fill ph-tornado"></i>
-                <span class="ambient-sub">STORM &middot; <span class="kanji">嵐</span></span>
+                <span class="ambient-sub">STORM &middot; 嵐</span>
             </button>
         </div>
-
-        <div class="footer"></div>
     </div>
 
     <button class="zen-back-btn" id="zenBackBtn" title="Exit Fullscreen">
@@ -922,17 +893,14 @@
         <div class="modal-box">
             <div class="modal-header">
                 <h3 class="modal-title" id="modalHeaderTitle">SETTINGS <span class="kanji">設定</span></h3>
-                <button class="close-btn" id="closeModalBtn" title="Close">
-                    <i class="ph ph-x"></i>
-                </button>
+                <button class="close-btn" id="closeModalBtn" title="Close"><i class="ph ph-x"></i></button>
             </div>
             <div class="modal-body">
                 <div class="modal-view active" id="settingsMainView">
                     <div class="settings-section-title">Volume Controls</div>
-
                     <div class="setting-group">
                         <div class="setting-label">
-                            <span>Lofi Beats / Radio</span>
+                            <span>Music Stream</span>
                             <span id="musicVolVal">80%</span>
                         </div>
                         <input type="range" id="musicVolumeSlider" min="0" max="100" value="80">
@@ -942,7 +910,6 @@
                         <span>SFX Controls</span>
                         <i class="ph ph-caret-right" id="sfxArrow"></i>
                     </div>
-
                     <div class="sfx-accordion-content" id="sfxAccordionContent">
                         <div class="setting-group">
                             <div class="setting-label"><span>Rain <span class="kanji">雨</span></span><span
@@ -993,6 +960,12 @@
                         <button class="theme-btn active" data-theme-mode="dark">Dark</button>
                     </div>
 
+                    <div class="settings-section-title">UI Style</div>
+                    <div class="theme-options" id="uiOptions">
+                        <button class="theme-btn active" data-ui-mode="retro">Retro</button>
+                        <button class="theme-btn" data-ui-mode="modern">Modern</button>
+                    </div>
+
                     <div class="settings-section-title">Productivity <span class="kanji">生産性</span></div>
                     <div class="setting-group">
                         <div class="setting-label">
@@ -1005,7 +978,7 @@
                     </div>
                     <div class="setting-group">
                         <div class="setting-label">
-                            <span>Timer</span>
+                            <span>Custom Timer</span>
                             <label class="switch">
                                 <input type="checkbox" id="customTimerToggle">
                                 <span class="slider-toggle"></span>
@@ -1013,11 +986,11 @@
                         </div>
                         <div class="custom-timer-input-group" id="customTimerInputGroup">
                             <span>Duration (minutes)</span>
-                            <input type="number" id="customTimerInput" min="1" max="1440" value="10">
+                            <input type="number" id="customTimerInput" min="1" max="1440" value="25">
                         </div>
                     </div>
 
-                    <div class="setting-group" style="margin-top: 5px;">
+                    <div class="setting-group" style="margin-top: 4px;">
                         <button class="info-menu-btn" id="openInfoViewBtn">
                             <span>Info <span class="kanji">情報</span></span>
                             <i class="ph ph-caret-right"></i>
@@ -1086,9 +1059,7 @@
         <div class="modal-box">
             <div class="modal-header">
                 <h3 class="modal-title">STATIONS <span class="kanji">局</span></h3>
-                <button class="close-btn" id="closeStationModalBtn" title="Close">
-                    <i class="ph ph-x"></i>
-                </button>
+                <button class="close-btn" id="closeStationModalBtn" title="Close"><i class="ph ph-x"></i></button>
             </div>
             <div class="modal-body">
                 <div class="station-list" id="stationListContainer"></div>
@@ -1105,31 +1076,6 @@
     </div>
 
     <script>
-        // --- GLOBAL STATE PERSISTENCE HELPERS ---
-        function savePreferences() {
-            const prefs = {
-                theme: localStorage.getItem('ren2_theme') || 'dark',
-                currentTrackIndex: currentTrackIndex,
-                musicVolume: musicVolumeSlider.value,
-                timerMode: activeTimerMode,
-                customMins: customTimerInput.value,
-                sfxVolumes: {},
-                activeAmbient: []
-            };
-
-            sfxSliders.forEach(slider => {
-                prefs.sfxVolumes[slider.getAttribute('data-sound')] = slider.value;
-            });
-
-            ambientBtns.forEach(btn => {
-                if (btn.classList.contains('active')) {
-                    prefs.activeAmbient.push(btn.getAttribute('data-sound'));
-                }
-            });
-
-            localStorage.setItem('ren2_user_preferences', JSON.stringify(prefs));
-        }
-
         // --- THEME LOGIC ---
         const themeButtons = document.querySelectorAll('.theme-btn');
         const htmlElement = document.documentElement;
@@ -1146,16 +1092,42 @@
                 htmlElement.setAttribute('data-theme', mode);
             }
             localStorage.setItem('ren2_theme', mode);
-            savePreferences();
         }
 
         themeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => setTheme(e.target.getAttribute('data-theme-mode')));
+        });
+
+        // --- UI TOGGLE LOGIC ---
+        const uiButtons = document.querySelectorAll('[data-ui-mode]');
+
+        function setUI(mode, save = true) {
+            uiButtons.forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.querySelector(`[data-ui-mode="${mode}"]`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            if (save) {
+                localStorage.setItem('ren2_ui', mode);
+                if (mode === 'modern') {
+                    window.location.href = 'ui2.html';
+                } else if (mode === 'retro') {
+                    window.location.href = 'index.html';
+                }
+            }
+        }
+
+        uiButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
-                setTheme(e.target.getAttribute('data-theme-mode'));
+                const mode = e.target.getAttribute('data-ui-mode');
+                setUI(mode, true);
             });
         });
 
-        // --- SETTINGS MODAL & VIEW SWITCHING LOGIC ---
+        // Enforce 'retro' as active on startup for index.html
+        const savedUI = localStorage.getItem('ren2_ui') || 'retro';
+        setUI(savedUI, false);
+
+        // --- SETTINGS MODAL & VIEWS ---
         const settingsBtn = document.getElementById('settingsBtn');
         const settingsModal = document.getElementById('settingsModal');
         const closeModalBtn = document.getElementById('closeModalBtn');
@@ -1187,10 +1159,12 @@
             modalHeaderTitle.innerHTML = 'SETTINGS <span class="kanji">設定</span>';
         });
 
-        // --- STATION SELECTOR MODAL LOGIC ---
+        // --- STATIONS MODAL ---
         const stationModal = document.getElementById('stationModal');
         const closeStationModalBtn = document.getElementById('closeStationModalBtn');
         const stationListContainer = document.getElementById('stationListContainer');
+        const stationTitle = document.getElementById('stationTitle');
+        const mainStationNameText = document.getElementById('mainStationNameText');
 
         function openStationModal() {
             populateStationList();
@@ -1206,7 +1180,7 @@
                 const btn = document.createElement('button');
                 btn.className = 'station-option-btn';
                 if (index === currentTrackIndex) btn.classList.add('active');
-                btn.innerHTML = `<span>${track.name}</span> ${index === currentTrackIndex ? '<i class="ph-fill ph-check"></i>' : ''}`;
+                btn.innerHTML = `<span>STATION ${String(index + 1).padStart(2, '0')} &middot; ${track.name}</span> ${index === currentTrackIndex ? '<i class="ph-fill ph-check"></i>' : ''}`;
                 btn.addEventListener('click', () => {
                     selectStation(index);
                     stationModal.classList.remove('open');
@@ -1219,29 +1193,29 @@
             currentTrackIndex = index;
             audio.pause();
             audio.src = trackPlaylist[currentTrackIndex].url;
-            updateStationUI();
+            mainStationNameText.innerText = trackPlaylist[currentTrackIndex].name;
             if (isPlaying) audio.play().catch(console.error);
             savePreferences();
         }
 
-        // --- DYNAMIC GREETING LOGIC ---
+        // --- DYNAMIC GREETING ---
         function updateGreeting() {
             const greetingHeader = document.getElementById('greetingText');
             const currentHour = new Date().getHours();
-            let greeting = "Good night", kanji = "おやすみ";
+            let greeting = "Good Evening", kanji = "こんばんは";
 
             if (currentHour >= 3 && currentHour < 12) {
-                greeting = "Good morning"; kanji = "おはよう";
+                greeting = "Good Morning"; kanji = "おはよう";
             } else if (currentHour >= 12 && currentHour < 16) {
-                greeting = "Good afternoon"; kanji = "こんにちは";
+                greeting = "Good Afternoon"; kanji = "こんにちは";
             } else if (currentHour >= 16 && currentHour < 23) {
-                greeting = "Good evening"; kanji = "こんばんは";
+                greeting = "Good Evening"; kanji = "こんばんは";
             }
-            greetingHeader.innerHTML = `${greeting}<br><span class="kanji">${kanji}</span>`;
+            greetingHeader.innerHTML = `${greeting} <span class="kanji">${kanji}</span>`;
         }
         updateGreeting();
 
-        // --- SFX ACCORDION TOGGLE ---
+        // --- SFX ACCORDION ---
         const sfxAccordionToggle = document.getElementById('sfxAccordionToggle');
         const sfxAccordionContent = document.getElementById('sfxAccordionContent');
         const sfxArrow = document.getElementById('sfxArrow');
@@ -1251,7 +1225,7 @@
             sfxArrow.style.transform = sfxAccordionContent.classList.contains('open') ? 'rotate(90deg)' : 'rotate(0deg)';
         });
 
-        // --- CLOCK LOGIC ---
+        // --- CLOCK (ZEN MODE) ---
         const zenClock = document.getElementById("zenClock");
         function updateClock() {
             const now = new Date();
@@ -1260,7 +1234,7 @@
         updateClock();
         setInterval(updateClock, 1000);
 
-        // --- UNIFIED TIMER LOGIC ---
+        // --- TIMER SYSTEM ---
         const pomodoroToggle = document.getElementById('pomodoroToggle');
         const customTimerToggle = document.getElementById('customTimerToggle');
         const customTimerInputGroup = document.getElementById('customTimerInputGroup');
@@ -1275,13 +1249,9 @@
         const timerConfirmBox = document.getElementById('timerConfirmBox');
         const timerConfirmYes = document.getElementById('timerConfirmYes');
         const timerConfirmNo = document.getElementById('timerConfirmNo');
-        const timerCompleteSound = new Audio("timer.mp3");
+        const timerCompleteSound = new Audio("https://lilofiradio.com/_nuxt/rain.CUctS49_.mp3");
 
         const pomodoroSequence = [
-            { duration: 25 * 60, label: "Work" },
-            { duration: 5 * 60, label: "Short Break" },
-            { duration: 25 * 60, label: "Work" },
-            { duration: 5 * 60, label: "Short Break" },
             { duration: 25 * 60, label: "Work" },
             { duration: 5 * 60, label: "Short Break" },
             { duration: 25 * 60, label: "Work" },
@@ -1290,7 +1260,7 @@
 
         let activeTimerMode = 'none';
         let seqIndex = 0;
-        let customDurationSec = parseInt(customTimerInput.value || 10, 10) * 60;
+        let customDurationSec = parseInt(customTimerInput.value || 25, 10) * 60;
         let timeLeft = pomodoroSequence[0].duration;
         let timerRunning = false;
         let timerInterval = null;
@@ -1317,7 +1287,26 @@
                     updateTimerUI();
                 } else {
                     timerCompleteSound.currentTime = 0;
-                    timerCompleteSound.play().catch(err => console.warn("Timer SFX play error:", err));
+                    timerCompleteSound.play().catch(console.warn);
+
+                    // --- STOP ALL AUDIO WHEN TIMER HITS 0 ---
+                    if (isPlaying) {
+                        audio.pause();
+                        isPlaying = false;
+                        playIcon.className = 'ph-fill ph-play';
+                        playMainText.textContent = '';
+                        playBtn.classList.remove('playing');
+                        artWrapper.classList.add('paused');
+                    }
+
+                    // Stop and clear all active ambient sounds
+                    for (const soundType in ambientAudioObjects) {
+                        ambientAudioObjects[soundType].pause();
+                        ambientAudioObjects[soundType].currentTime = 0;
+                    }
+                    ambientBtns.forEach(btn => btn.classList.remove('active'));
+                    // ----------------------------------------
+
                     if (activeTimerMode === 'pomodoro') {
                         seqIndex = (seqIndex + 1) % pomodoroSequence.length;
                         timeLeft = pomodoroSequence[seqIndex].duration;
@@ -1327,6 +1316,7 @@
                         timeLeft = customDurationSec;
                         updateTimerUI();
                     }
+                    savePreferences();
                 }
             }, 1000);
         }
@@ -1342,7 +1332,7 @@
                 seqIndex = 0;
                 timeLeft = pomodoroSequence[seqIndex].duration;
             } else if (activeTimerMode === 'custom') {
-                customDurationSec = parseInt(customTimerInput.value || 10, 10) * 60;
+                customDurationSec = parseInt(customTimerInput.value || 25, 10) * 60;
                 timeLeft = customDurationSec;
             }
             updateTimerUI();
@@ -1354,7 +1344,7 @@
                 customTimerInputGroup.classList.remove('open');
                 activeTimerMode = 'pomodoro';
                 seqIndex = 0;
-                timeLeft = pomodoroSequence[seqIndex].duration;
+                timeLeft = pomodoroSequence[0].duration;
                 updateTimerUI();
                 timerOverlay.style.display = 'block';
                 artDisplay.classList.add('timer-active');
@@ -1372,7 +1362,7 @@
                 pomodoroToggle.checked = false;
                 customTimerInputGroup.classList.add('open');
                 activeTimerMode = 'custom';
-                const mins = parseInt(customTimerInput.value || 10, 10);
+                const mins = parseInt(customTimerInput.value || 25, 10);
                 customDurationSec = mins * 60;
                 timeLeft = customDurationSec;
                 updateTimerUI();
@@ -1420,7 +1410,7 @@
         timerConfirmYes.addEventListener('click', () => { resetTimerEngine(); timerConfirmBox.style.display = 'none'; });
         timerConfirmNo.addEventListener('click', () => timerConfirmBox.style.display = 'none');
 
-        // --- ARTWORK LOGIC ---
+        // --- ARTWORK & ZEN MODE ---
         let currentArtIndex = Math.floor(Math.random() * artworks.length);
         const artWrapper = document.getElementById("artWrapper");
         const zenBackBtn = document.getElementById("zenBackBtn");
@@ -1475,16 +1465,15 @@
             if (!document.fullscreenElement && !document.webkitFullscreenElement) exitFullscreenMode();
         });
 
-        // --- AUDIO STREAM & PLAYLIST LOGIC ---
+        // --- AUDIO STREAM & CONTROLS ---
         let currentTrackIndex = 0;
         let audio = new Audio(trackPlaylist[currentTrackIndex].url);
         let isPlaying = false;
         audio.volume = 0.8;
 
-        const deckOpenSound = new Audio("https://lilofiradio.com/_nuxt/deck_close.zqn5rJ7u.mp3");
-        const deckCloseSound = new Audio("https://lilofiradio.com/_nuxt/deck_open.Vo5hh4RN.mp3");
         const playBtn = document.getElementById('playBtn');
-        const stationTitle = document.getElementById('stationTitle');
+        const playIcon = document.getElementById('playIcon');
+        const playMainText = document.getElementById('playMainText');
         const musicVolumeSlider = document.getElementById('musicVolumeSlider');
         const musicVolVal = document.getElementById('musicVolVal');
 
@@ -1495,33 +1484,17 @@
             savePreferences();
         });
 
-        function updateStationUI(statusText = "") {
-            const track = trackPlaylist[currentTrackIndex];
-            let statusHTML = `<span class="kanji">SCAN ・ 他検索</span>`;
-            if (statusText === "buffering") statusHTML = `<span class="kanji" style="color: #f1c40f;">BUFFERING...</span>`;
-            else if (statusText === "error") statusHTML = `<span class="kanji" style="color: #e74c3c;">STREAM OFFLINE</span>`;
-            stationTitle.innerHTML = `${track.name} ${statusHTML}`;
-        }
-
-        updateStationUI();
-        audio.addEventListener("ended", () => nextTrack());
-        audio.addEventListener("error", () => { updateStationUI("error"); setTimeout(nextTrack, 2000); });
-        audio.addEventListener("waiting", () => { if (isPlaying) updateStationUI("buffering"); });
-        audio.addEventListener("playing", () => updateStationUI());
-        audio.addEventListener("stalled", () => { if (isPlaying) updateStationUI("buffering"); });
-
         function nextTrack() {
             currentTrackIndex = (currentTrackIndex + 1) % trackPlaylist.length;
             audio.pause();
             audio.src = trackPlaylist[currentTrackIndex].url;
-            updateStationUI();
+            mainStationNameText.innerText = trackPlaylist[currentTrackIndex].name;
             if (isPlaying) audio.play().catch(console.error);
             savePreferences();
         }
 
         let stationPressTimer = null, stationLongPressTriggered = false;
         stationTitle.addEventListener('click', () => { if (!stationLongPressTriggered) nextTrack(); });
-
         stationTitle.addEventListener("mousedown", () => {
             stationLongPressTriggered = false;
             stationPressTimer = setTimeout(() => { stationLongPressTriggered = true; openStationModal(); }, 600);
@@ -1536,28 +1509,26 @@
 
         playBtn.addEventListener('click', () => {
             if (!isPlaying) {
-                deckOpenSound.currentTime = 0;
-                deckOpenSound.play().catch(console.warn);
                 audio.play().then(() => {
                     isPlaying = true;
-                    playBtn.innerHTML = '<i class="ph-fill ph-stop"></i>';
+                    playIcon.className = 'ph-fill ph-stop';
+                    playMainText.textContent = '';
                     playBtn.classList.add('playing');
-                    artWrapper.classList.remove('paused'); // <--- Remove pause overlay
+                    artWrapper.classList.remove('paused');
                     savePreferences();
                 }).catch(console.error);
             } else {
-                deckCloseSound.currentTime = 0;
-                deckCloseSound.play().catch(console.warn);
                 audio.pause();
                 isPlaying = false;
-                playBtn.innerHTML = '<i class="ph-fill ph-play"></i>';
+                playIcon.className = 'ph-fill ph-play';
+                playMainText.textContent = '';
                 playBtn.classList.remove('playing');
-                artWrapper.classList.add('paused'); // <--- Add pause/VHS overlay
+                artWrapper.classList.add('paused');
                 savePreferences();
             }
         });
 
-        // --- AMBIENT SOUND LOGIC ---
+        // --- AMBIENT SOUNDS ---
         const ambientAudioObjects = {};
         for (const key in ambientSources) {
             ambientAudioObjects[key] = new Audio(ambientSources[key]);
@@ -1572,7 +1543,7 @@
                 const ambientAudio = ambientAudioObjects[soundType];
                 btn.classList.toggle('active');
                 if (btn.classList.contains('active')) {
-                    if (ambientAudio) ambientAudio.play().catch(e => console.warn(e));
+                    if (ambientAudio) ambientAudio.play().catch(console.warn);
                 } else {
                     if (ambientAudio) ambientAudio.pause();
                 }
@@ -1592,6 +1563,7 @@
             });
         });
 
+        // --- PREFERENCES STORAGE ---
         function savePreferences() {
             const prefs = {
                 theme: localStorage.getItem('ren2_theme') || 'dark',
@@ -1599,7 +1571,6 @@
                 musicVolume: musicVolumeSlider.value,
                 timerMode: activeTimerMode,
                 customMins: customTimerInput.value,
-                isPlaying: isPlaying, // <--- Added play state persistence
                 sfxVolumes: {},
                 activeAmbient: []
             };
@@ -1609,39 +1580,32 @@
             });
 
             ambientBtns.forEach(btn => {
-                if (btn.classList.contains('active')) {
-                    prefs.activeAmbient.push(btn.getAttribute('data-sound'));
-                }
+                if (btn.classList.contains('active')) prefs.activeAmbient.push(btn.getAttribute('data-sound'));
             });
 
             localStorage.setItem('ren2_user_preferences', JSON.stringify(prefs));
         }
 
-        // --- LOAD SAVED PREFERENCES ON STARTUP ---
         function loadPreferences() {
+
+            const savedUI = localStorage.getItem('ren2_ui') || 'retro';
+            setUI(savedUI, false);
+
             const saved = localStorage.getItem('ren2_user_preferences');
             if (!saved) return;
             try {
                 const prefs = JSON.parse(saved);
-
-                // Theme
                 if (prefs.theme) setTheme(prefs.theme);
-
-                // Radio Station
                 if (prefs.currentTrackIndex !== undefined && prefs.currentTrackIndex < trackPlaylist.length) {
                     currentTrackIndex = prefs.currentTrackIndex;
                     audio.src = trackPlaylist[currentTrackIndex].url;
-                    updateStationUI();
+                    mainStationNameText.innerText = trackPlaylist[currentTrackIndex].name;
                 }
-
-                // Music Volume
                 if (prefs.musicVolume !== undefined) {
                     musicVolumeSlider.value = prefs.musicVolume;
                     audio.volume = prefs.musicVolume / 100;
                     musicVolVal.innerText = prefs.musicVolume + '%';
                 }
-
-                // SFX Volumes
                 if (prefs.sfxVolumes) {
                     for (const sound in prefs.sfxVolumes) {
                         const slider = document.querySelector(`.sfx-slider[data-sound="${sound}"]`);
@@ -1649,31 +1613,22 @@
                         if (slider && valDisp) {
                             slider.value = prefs.sfxVolumes[sound];
                             valDisp.innerText = prefs.sfxVolumes[sound] + '%';
-                            if (ambientAudioObjects[sound]) {
-                                ambientAudioObjects[sound].volume = prefs.sfxVolumes[sound] / 100;
-                            }
+                            if (ambientAudioObjects[sound]) ambientAudioObjects[sound].volume = prefs.sfxVolumes[sound] / 100;
                         }
                     }
                 }
-
-                // Active Ambient Sounds
-                if (prefs.activeAmbient && Array.isArray(prefs.activeAmbient)) {
+                if (prefs.activeAmbient) {
                     prefs.activeAmbient.forEach(sound => {
                         const btn = document.querySelector(`.ambient-btn[data-sound="${sound}"]`);
                         if (btn) {
                             btn.classList.add('active');
-                            if (ambientAudioObjects[sound]) {
-                                ambientAudioObjects[sound].play().catch(e => console.warn(e));
-                            }
+                            if (ambientAudioObjects[sound]) ambientAudioObjects[sound].play().catch(console.warn);
                         }
                     });
                 }
-
-                // Timers
                 if (prefs.timerMode === 'pomodoro') {
                     pomodoroToggle.checked = true;
                     activeTimerMode = 'pomodoro';
-                    seqIndex = 0;
                     timeLeft = pomodoroSequence[0].duration;
                     timerOverlay.style.display = 'block';
                     artDisplay.classList.add('timer-active');
@@ -1683,14 +1638,14 @@
                     customTimerInputGroup.classList.add('open');
                     activeTimerMode = 'custom';
                     if (prefs.customMins) customTimerInput.value = prefs.customMins;
-                    customDurationSec = parseInt(customTimerInput.value || 10, 10) * 60;
+                    customDurationSec = parseInt(customTimerInput.value || 25, 10) * 60;
                     timeLeft = customDurationSec;
                     timerOverlay.style.display = 'block';
                     artDisplay.classList.add('timer-active');
                     updateTimerUI();
                 }
             } catch (err) {
-                console.error("Failed to load saved preferences:", err);
+                console.error("Preferences load error:", err);
             }
         }
 
