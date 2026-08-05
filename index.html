@@ -8,6 +8,8 @@
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" />
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css" />
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="artworks.js"></script>
+    <script src="playlists.js"></script>
     <style>
         /* Base styles and Theme Variables */
         :root {
@@ -824,26 +826,6 @@
             line-height: 2;
         }
 
-        .tenor-watermark {
-            position: absolute;
-            bottom: 2px;
-            right: 0px;
-            font-family: 'Press Start 2P', monospace;
-            font-size: 7px;
-            letter-spacing: 1px;
-            color: rgba(255, 255, 255, 0.5);
-            background: transparent;
-            padding: 4px 6px;
-            border-radius: 4px;
-            pointer-events: none;
-            z-index: 12;
-            transition: opacity 0.3s ease;
-        }
-
-        body.fullscreen-art .tenor-watermark {
-            opacity: 0;
-        }
-
         /* VHS Pause Effect Overlay */
         .art-wrapper.paused::after {
             content: "";
@@ -875,7 +857,6 @@
 
         <div class="art-wrapper" id="artWrapper">
             <div id="artDisplay" class="art-display" title="Tap & hold for fullscreen, click to shuffle"></div>
-            <div class="tenor-watermark">TENOR</div>
             <div class="timer-overlay" id="timerOverlay" title="Tap to pause/play, double tap to reset">
                 <div class="timer-time" id="timerTimerDisplay">25:00</div>
                 <div class="timer-status" id="timerStatusDisplay">Work</div>
@@ -1440,37 +1421,6 @@
         timerConfirmNo.addEventListener('click', () => timerConfirmBox.style.display = 'none');
 
         // --- ARTWORK LOGIC ---
-        const artworks = [
-            "https://media1.tenor.com/m/nySkQmq76FEAAAAd/pixel-art.gif",
-            "https://media1.tenor.com/m/u8udnFc2aooAAAAd/streets-quiet.gif",
-            "https://media1.tenor.com/m/zzhMh-fSdfUAAAAd/chill-cat.gif",
-            "https://media1.tenor.com/m/hnE1IGzaRxkAAAAd/nature-calm.gif",
-            "https://media1.tenor.com/m/mVyaQ0EXg9EAAAAd/girl-relax.gif",
-            "https://media1.tenor.com/m/40EiJbBjIvYAAAAd/pixel.gif",
-            "https://media1.tenor.com/m/7H9rT9yYkeoAAAAd/stuff.gif",
-            "https://media1.tenor.com/m/a2rxlFSKMHsAAAAd/pond-grass.gif",
-            "https://media1.tenor.com/m/9fChdan7amUAAAAd/aesthetic-art.gif",
-            "https://media1.tenor.com/m/2H2fBP1-BJMAAAAd/pixel.gif",
-            "https://media1.tenor.com/m/ac4i5Dao5OEAAAAd/saturday-calm.gif",
-            "https://media1.tenor.com/m/pdfixnYkMrcAAAAd/pixel-art-tree.gif",
-            "https://media1.tenor.com/m/iedLCcqQp_MAAAAd/relaxing.gif",
-            "https://media1.tenor.com/m/wmkcq3t_cIEAAAAd/calm-and-relaxing-place-wallpaper-gifs.gif",
-            "https://media1.tenor.com/m/FvWdTYtEu7MAAAAd/kikis-delivery-service-chill.gif",
-            "https://media1.tenor.com/m/Yj18QExe9eoAAAAd/kiki%27s-delivery-service-jiji.gif",
-            "https://media1.tenor.com/m/sPgjkfTosVsAAAAd/video-game-animated.gif",
-            "https://media1.tenor.com/m/xiWD7lkCTIcAAAAd/trees-windy.gif",
-            "https://media1.tenor.com/m/zJ40vcOgD-cAAAAd/art-relaxing.gif",
-            "https://media1.tenor.com/m/TCEyVCo9wG0AAAAd/dark-souls-bonfire.gif",
-            "https://media1.tenor.com/m/4q1CxYO25e0AAAAd/pixel-art.gif",
-            "https://media1.tenor.com/m/-HkbP1KuqbMAAAAd/pixel-art-kitchen.gif",
-            "https://media1.tenor.com/m/VJLBFgo3FkoAAAAd/fish.gif",
-            "https://media1.tenor.com/m/V6uwnKoOSloAAAAd/pixel-rain.gif",
-            "https://media1.tenor.com/m/3u4tg-PUUzcAAAAd/kuuchuu-roukaku-pixel-art.gif",
-            "https://media1.tenor.com/m/NRIKfbiDt8MAAAAd/minecraft-background.gif",
-            "https://media1.tenor.com/m/SeHY8_FGt0IAAAAd/oniisama-e-dear-brother.gif",
-            "https://media1.tenor.com/m/2H2fBP1-BJMAAAAd/pixel.gif"
-        ];
-
         let currentArtIndex = Math.floor(Math.random() * artworks.length);
         const artWrapper = document.getElementById("artWrapper");
         const zenBackBtn = document.getElementById("zenBackBtn");
@@ -1526,21 +1476,6 @@
         });
 
         // --- AUDIO STREAM & PLAYLIST LOGIC ---
-        const trackPlaylist = [
-            { name: "LILO-FI", url: "https://azurecloud.pvtwebs.com/listen/lilo/radio.mp3" },
-            { name: "LOFI 24-7", url: "https://ec3.yesstreaming.net:3755/stream" },
-            { name: "MOE Lofi", url: "https://stream-178.surfernetwork.com/v5reddyk8rhvv" },
-            { name: "FLUX CHILLHOP", url: "https://streams.fluxfm.de/Chillhop/aac-64/streams.fluxfm.de/" },
-            { name: "CHILLOFI", url: "https://streams.dez.ovh/listen/chillofi/radio.mp3" },
-            { name: "LAUT LOFI", url: "https://lofi.stream.laut.fm/lofi" },
-            { name: "NIA LO-FI", url: "https://radio.nia.nc/radio/8020/lofi-hq-stream.aac" },
-            { name: "LO-FIRE", url: "https://lo-firefm.stream.laut.fm/lo-firefm" },
-            { name: "SYNTHWAVE", url: "https://stream.synthwaveradio.eu/listen/synthwaveradio.eu/radio.mp3" },
-            { name: "ANIME", url: "https://stream.animeradio.de/animeradio.mp3" },
-            { name: "VAPORWAVE", url: "https://ice6.somafm.com/vaporwaves-64-aac" },
-            { name: "K-POP", url: "https://play.radioking.io/k-pop-highway-radio" },
-        ];
-
         let currentTrackIndex = 0;
         let audio = new Audio(trackPlaylist[currentTrackIndex].url);
         let isPlaying = false;
@@ -1623,17 +1558,6 @@
         });
 
         // --- AMBIENT SOUND LOGIC ---
-        const ambientSources = {
-            rain: "https://lilofiradio.com/_nuxt/rain.CUctS49_.mp3",
-            vinyl: "https://lilofiradio.com/_nuxt/vinyl.r3TP7i0m.mp3",
-            fire: "https://lilofiradio.com/_nuxt/fire.D-3nj1MV.mp3",
-            ocean: "https://lilofiradio.com/_nuxt/ocean.ECLxH3fW.mp3",
-            tape: "https://lilofirizer.com/_nuxt/tape.CbakOG-B.mp3",
-            woods: "https://lilofiradio.com/_nuxt/woods.B-sh45Ha.mp3",
-            river: "https://lilofiradio.com/_nuxt/river.BqLXToDa.mp3",
-            storm: "https://lilofiradio.com/_nuxt/storm.DqMuEy03.mp3"
-        };
-
         const ambientAudioObjects = {};
         for (const key in ambientSources) {
             ambientAudioObjects[key] = new Audio(ambientSources[key]);
